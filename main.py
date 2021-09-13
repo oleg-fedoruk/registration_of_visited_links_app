@@ -27,21 +27,20 @@ def visited_links():
         links = data_object.get('links')
     except AttributeError:
         status_code = 400
-        return "Invalid data", status_code
-
-    if links is None:
-        status_code = 400
         return "Invalid data. Your JSON don't have key 'links'", status_code
 
+    if not links:
+        status_code = 400
+        return "Invalid data. Key 'links' is empty or your JSON don't have such key", status_code
+
     now = int(time.time())
-    print(now)
     links = json.dumps(links)
     try:
         server.zadd('bd', {links: now})
     except:
-        pass
+        return 'DB Error', 400
     response = '{"status": "ok"}'
-    return response
+    return response, 200
 
 
 @app.route('/visited_domains', methods=['GET'])
@@ -59,9 +58,10 @@ def visited_domains():
     final_values = list()
     for x in req_result:
         final_values.extend(json.loads(x))
-    data = {'domains': list(set(final_values)), 'status': 'ok'}
+    sorted_list = sorted(list(set(final_values)))
+    data = {'domains': sorted_list, 'status': 'ok'}
     data = json.dumps(data)
-    return data
+    return data, 200
 
 
 if __name__ == "__main__":
