@@ -29,19 +29,19 @@ class TestPostRequest(TestCase):
         data_to_send = '["krollykin.ru"]'
         response = self.app.post(self.base_url, data=data_to_send)
         response_text = response.data.decode()
-        self.assertEqual("Invalid data. Your JSON don't have key 'links'", response_text)
+        self.assertEqual('{"status": 400}', response_text)
 
     def test_post_without_links_key(self):
         data_to_send = '{"cell": ["krollykin.ru"]}'
         response = self.app.post(self.base_url, data=data_to_send)
         response_text = response.data.decode()
-        self.assertEqual("Invalid data. Key 'links' is empty or your JSON don't have such key", response_text)
+        self.assertEqual('{"status": 400}', response_text)
 
     def test_post_without_value_of_links_key(self):
         data_to_send = '{"links": []}'
         response = self.app.post(self.base_url, data=data_to_send)
         response_text = response.data.decode()
-        self.assertEqual("Invalid data. Key 'links' is empty or your JSON don't have such key", response_text)
+        self.assertEqual('{"status": 400}', response_text)
 
 
 class TestGetRequest(TestCase):
@@ -80,8 +80,9 @@ class TestGetRequest(TestCase):
         my_req = f'?from={time_from}&to={now}'
         response = self.app.get(self.base_url + my_req)
         response_text = response.data.decode()
-        serilized_response = '{"domains": ["funbox.ru", "yandex.ru"], "status": "ok"}'
-        self.assertEqual(response_text, serilized_response)
+        deserilized_response = json.loads(response_text)
+        expected_response = {"domains": ["funbox.ru", "yandex.ru"], "status": "ok"}
+        self.assertEqual(deserilized_response, expected_response)
 
     def test_get_request_return_filtered_result(self):
         now = int(time.time())
@@ -89,5 +90,6 @@ class TestGetRequest(TestCase):
         my_req = f'?from={time_from}&to={now}'
         response = self.app.get(self.base_url + my_req)
         response_text = response.data.decode()
-        serilized_response = '{"domains": ["yandex.ru"], "status": "ok"}'
-        self.assertEqual(response_text, serilized_response)
+        deserilized_response = json.loads(response_text)
+        expected_response = {"domains": ["yandex.ru"], "status": "ok"}
+        self.assertEqual(deserilized_response, expected_response)

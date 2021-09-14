@@ -8,7 +8,7 @@ server = redis.StrictRedis(host='localhost', port=6379, db=0, decode_responses=T
 try:
     server.ping()
 except redis.exceptions.ConnectionError:
-    print("Doesn't work")
+    print("Connection to DB doesn't work")
 
 
 @app.route('/visited_links', methods=['POST'])
@@ -16,31 +16,19 @@ def visited_links():
     """Первый ресурс служит для передачи в сервис массива ссылок в POST-запросе.
     Временем их посещения считается время получения запроса сервисом."""
     links_json = request.get_data(as_text=True)
-
+    status_code = 'ok'
     try:
         data_object = json.loads(links_json)
-    except json.JSONDecodeError:
-        status_code = 400
-        return "Invalid data. Can not parse data to JSON", status_code
-
-    try:
         links = data_object.get('links')
-    except AttributeError:
-        status_code = 400
-        return "Invalid data. Your JSON don't have key 'links'", status_code
-
-    if not links:
-        status_code = 400
-        return "Invalid data. Key 'links' is empty or your JSON don't have such key", status_code
-
-    now = int(time.time())
-    links = json.dumps(links)
-    try:
+        if not links:
+            status_code = 400
+        now = int(time.time())
+        links = json.dumps(links)
         server.zadd('bd', {links: now})
     except:
-        return 'DB Error', 400
-    response = '{"status": "ok"}'
-    return response, 200
+        status_code = 400
+    response = json.dumps({"status": status_code})
+    return response
 
 
 @app.route('/visited_domains', methods=['GET'])
@@ -50,18 +38,18 @@ def visited_domains():
 
     time_from = request.args.get("from", type=int)
     time_to = request.args.get("to", type=int)
-
+    data = {'status': 'ok'}
     try:
         req_result = server.zrangebyscore('bd', time_from, time_to)
+        final_values = list()
+        for x in req_result:
+            final_values.extend(json.loads(x))
+        sorted_list = sorted(list(set(final_values)))
+        data['domains'] = sorted_list
     except:
-        return 'DB Error', 400
-    final_values = list()
-    for x in req_result:
-        final_values.extend(json.loads(x))
-    sorted_list = sorted(list(set(final_values)))
-    data = {'domains': sorted_list, 'status': 'ok'}
+        data['status'] = 400
     data = json.dumps(data)
-    return data, 200
+    return data
 
 
 if __name__ == "__main__":
