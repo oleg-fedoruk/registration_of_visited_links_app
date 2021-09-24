@@ -10,7 +10,7 @@
 
 ## Local installation
 
-1. `git remote add origin https://github.com/oleg-fedoruk/registration_of_visited_links_app.git`
+1. `git clone https://github.com/oleg-fedoruk/registration_of_visited_links_app.git`
 
 2. setup venv
 
@@ -23,5 +23,5 @@
     ```
 3. run app
    ```sh
-    python3 manage.py main.py
+    python3 main.py
     ```
